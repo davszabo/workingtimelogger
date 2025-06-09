@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="hu.david.worklog.ui.MainViewController"
+            prefWidth="1920"
+            prefHeight="1080"
+            style="-fx-background-color: #F4F4F4; -fx-padding: 20;">
+
+    <!-- Bal oldali fix menüsor -->
+    <left>
+        <VBox spacing="15" alignment="TOP_CENTER"
+              style="-fx-background-color: #3A3A3A; -fx-padding: 20; -fx-border-radius: 10;">
+            <Label text="Munkaidő Kezelés"
+                   style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;"/>
+
+            <Button text="Főoldal" fx:id="homeButton" prefWidth="250"
+                    style="-fx-font-size: 16px;" onAction="#goHome"/>
+
+            <Button text="Új bejegyzés" fx:id="newEntryButton" prefWidth="250"
+                    style="-fx-font-size: 16px;" onAction="#showNewEntry"/>
+
+            <Button text="Bejegyzések listája" fx:id="entriesButton" prefWidth="250"
+                    style="-fx-font-size: 16px;" onAction="#showEntries"/>
+
+            <Button text="Kilépés" fx:id="exitButton" prefWidth="250"
+                    style="-fx-font-size: 16px;" onAction="#exitApplication"/>
+        </VBox>
+    </left>
+
+    <!-- Dinamikus tartalom -->
+    <center>
+        <StackPane fx:id="contentArea"
+                   style="-fx-background-color: white; -fx-padding: 30; -fx-border-radius: 10;"
+                   prefWidth="1300"
+                   prefHeight="900">
+            <Label text="Üdvözöljük a munkaidő nyilvántartó rendszerben!"
+                   style="-fx-font-size: 22px;"/>
+        </StackPane>
+    </center>
+</BorderPane>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           stylesheets="@style.css"
+           fx:controller="hu.david.worklog.ui.HomeController"
+           alignment="CENTER">
+
+    <Label text="Üdvözöljük a munkaidő nyilvántartó rendszerben!"
+           styleClass="label-title"/>
+
+</StackPane>

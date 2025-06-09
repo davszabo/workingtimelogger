@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@style.css"
+            fx:controller="hu.david.worklog.ui.EntriesViewController"
+            prefWidth="1300"
+            prefHeight="900">
+
+    <top>
+        <Label text="Mentett bejegyzések" styleClass="label-title" />
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true">
+            <ListView fx:id="entriesList" prefHeight="600" />
+        </ScrollPane>
+    </center>
+
+    <bottom>
+        <HBox spacing="30" alignment="CENTER" styleClass="hbox-footer">
+            <Button text="Vissza" onAction="#goBack" />
+            <Button text="Bejegyzés törlése" onAction="#deleteSelectedEntries" />
+            <Button text="Frissítés" onAction="#refreshEntries" />
+        </HBox>
+    </bottom>
+</BorderPane>

@@ -1,0 +1,46 @@
+/* style.css - központi JavaFX stílusok */
+
+.root {
+    -fx-font-family: 'Segoe UI', sans-serif;
+    -fx-background-color: #F4F4F4;
+}
+
+.label-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.button {
+    -fx-font-size: 16px;
+    -fx-padding: 10 20;
+    -fx-background-radius: 8;
+}
+
+.text-field, .text-area, .combo-box, .date-picker {
+    -fx-pref-width: 200;
+}
+
+.hbox-footer {
+    -fx-background-color: #EDEDED;
+    -fx-padding: 20;
+    -fx-spacing: 30;
+    -fx-alignment: center;
+}
+
+.vbox-sidebar {
+    -fx-background-color: #3A3A3A;
+    -fx-padding: 20;
+    -fx-spacing: 15;
+    -fx-alignment: top_center;
+}
+
+.vbox-sidebar .label {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.vbox-sidebar .button {
+    -fx-pref-width: 250;
+    -fx-font-size: 16px;
+}

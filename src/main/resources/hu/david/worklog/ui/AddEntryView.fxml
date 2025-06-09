@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@style.css"
+            fx:controller="hu.david.worklog.ui.AddEntryController"
+            prefWidth="1600"
+            prefHeight="900">
+
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true">
+            <VBox spacing="30" alignment="CENTER" style="-fx-padding: 20;" styleClass="vbox-main">
+                <Label text="Új bejegyzés hozzáadása" styleClass="label-title"/>
+
+                <GridPane hgap="20" vgap="20" alignment="CENTER">
+                    <Label text="Dátum:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <DatePicker fx:id="datePicker" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                    <Label text="Kezdő időpont:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <HBox GridPane.columnIndex="1" GridPane.rowIndex="1" spacing="20">
+                        <ComboBox fx:id="startHourCombo" />
+                        <ComboBox fx:id="startMinuteCombo" />
+                    </HBox>
+
+                    <Label text="Záró időpont:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                    <HBox GridPane.columnIndex="1" GridPane.rowIndex="2" spacing="20">
+                        <ComboBox fx:id="endHourCombo" />
+                        <ComboBox fx:id="endMinuteCombo" />
+                    </HBox>
+
+                    <Label text="Munkaórák:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                    <Label fx:id="hoursLabel" text="0 óra" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+                    <Label text="Órabér (Ft):" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                    <HBox GridPane.columnIndex="1" GridPane.rowIndex="4" spacing="25">
+                        <TextField fx:id="hourlyWageField" promptText="2000" />
+                        <CheckBox fx:id="outOfCountyCheckBox" text="Megyén kívüli szerelés" />
+                    </HBox>
+
+                    <Label text="Bér:" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+                    <Label fx:id="salaryLabel" text="0 Ft" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+
+                    <Label text="Leírás:" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+                    <TextArea fx:id="descriptionField" promptText="Munka rövid leírása"
+                              prefWidth="500" prefHeight="100" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+
+                    <Label text="Helyszínek:" GridPane.columnIndex="0" GridPane.rowIndex="7"/>
+                    <VBox GridPane.columnIndex="1" GridPane.rowIndex="7" spacing="10">
+                        <TextField fx:id="locationField" promptText="Add meg a helyszínt"/>
+                        <HBox spacing="15">
+                            <Button fx:id="addLocationButton" text="Helyszín hozzáadása" onAction="#addLocation"/>
+                            <Button fx:id="deleteLocationButton" text="Helyszín törlése" onAction="#deleteLocation"/>
+                        </HBox>
+                        <ListView fx:id="locationListView" prefWidth="400" prefHeight="100"/>
+                    </VBox>
+                </GridPane>
+            </VBox>
+        </ScrollPane>
+    </center>
+
+    <bottom>
+        <HBox styleClass="hbox-footer" minHeight="70">
+            <Button text="Vissza" onAction="#goBack"/>
+            <Button text="Mentés" onAction="#saveEntry"/>
+        </HBox>
+    </bottom>
+</BorderPane>
