@@ -20,7 +20,13 @@ public class DatabaseManager {
         } catch (ClassNotFoundException e) {
             throw new SQLException("SQLite JDBC driver not found!", e);
         }
-        return DriverManager.getConnection(URL);
+        Connection conn = DriverManager.getConnection(URL);
+        // Enable foreign key enforcement so cascading deletes remove related
+        // locations when a work_log row is deleted.
+        try (Statement s = conn.createStatement()) {
+            s.execute("PRAGMA foreign_keys = ON");
+        }
+        return conn;
     }
 
     public static void initializeDatabase() {
@@ -42,7 +48,7 @@ public class DatabaseManager {
                 location TEXT,
                 FOREIGN KEY(entry_id) REFERENCES work_log(id) ON DELETE CASCADE
             );
-        """;
+        """; // related rows are removed automatically when the parent entry is deleted
 
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             stmt.execute(createWorkLogTable);

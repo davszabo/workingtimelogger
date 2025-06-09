@@ -9,6 +9,7 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.sql.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -76,5 +77,15 @@ public class DatabaseManagerTest {
 
         List<WorkLogEntry> afterDelete = DatabaseManager.loadEntries();
         assertTrue(afterDelete.isEmpty());
+
+        // verify that related location rows are also removed
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:worklog.db");
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM locations")) {
+            assertTrue(rs.next());
+            assertEquals(0, rs.getInt(1));
+        } catch (SQLException e) {
+            fail("Database query failed" + e.getMessage());
+        }
     }
 }
