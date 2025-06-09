@@ -6,8 +6,13 @@
 }
 
 .label-title {
-    -fx-font-size: 22px;
+    -fx-font-size: 24px;
     -fx-font-weight: bold;
+    -fx-padding: 20px 0;
+    -fx-text-fill: #2c3e50;
+    -fx-alignment: center;
+}
+
 }
 
 .button {

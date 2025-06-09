@@ -1,19 +1,12 @@
 package hu.david.worklog.ui;
 
 import hu.david.worklog.model.WorkLogEntry;
-import javafx.geometry.Insets;
-import javafx.scene.control.Label;
+import hu.david.worklog.service.WageCalculator;
 import javafx.scene.control.ListCell;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 
-/**
- * Egyedi listaelem-megjelenítő a WorkLogEntry objektumokhoz.
- */
 public class EntryListCell extends ListCell<WorkLogEntry> {
-
     @Override
     protected void updateItem(WorkLogEntry entry, boolean empty) {
         super.updateItem(entry, empty);
@@ -22,26 +15,20 @@ public class EntryListCell extends ListCell<WorkLogEntry> {
             setText(null);
             setGraphic(null);
         } else {
-            Label dateLabel = new Label(entry.getDate().toString());
-            dateLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+            String date = entry.getDate().toString();
+            String description = entry.getDescription();
+            String location = entry.getLocation();
+            int wage = entry.getHourlyWage();
+            int totalWage = WageCalculator.calculateWage(entry);
 
-            Label timeLabel = new Label(entry.getStartTime() + " - " + entry.getEndTime());
-            Label locationLabel = new Label(entry.getLocation());
+            Text dateText = new Text("Dátum: " + date);
+            Text descText = new Text("Leírás: " + description);
+            Text locationText = new Text("Helyszínek: " + (location.isEmpty() ? "nincs megadva" : location));
+            Text wageText = new Text("Órabér: " + wage + " Ft");
+            Text totalText = new Text("Teljes napi bér: " + totalWage + " Ft");
 
-            VBox textBox = new VBox(dateLabel, timeLabel, locationLabel);
-            textBox.setSpacing(4);
-
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-
-            Label wageLabel = new Label(entry.getWage() + " Ft");
-            wageLabel.setStyle("-fx-text-fill: green;");
-
-            HBox cellBox = new HBox(textBox, spacer, wageLabel);
-            cellBox.setPadding(new Insets(10));
-            cellBox.setSpacing(10);
-
-            setGraphic(cellBox);
+            VBox box = new VBox(3, dateText, descText, locationText, wageText, totalText);
+            setGraphic(box);
         }
     }
 }

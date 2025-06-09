@@ -63,7 +63,7 @@ public class WorkLogEntry {
     }
 
     public List<String> getLocations() {
-        return locations;
+        return locations == null || locations.isEmpty() ? null : locations;
     }
 
     public void setLocations(List<String> locations) {
@@ -76,7 +76,7 @@ public class WorkLogEntry {
     }
 
     public String getLocation() {
-        return locations.isEmpty() ? "" : String.join(", ", locations);
+        return locations == null || locations.isEmpty() ? "" : String.join(", ", locations);
     }
 
     @Override

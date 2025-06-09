@@ -1,6 +1,7 @@
 package hu.david.worklog.db;
 
 import hu.david.worklog.model.WorkLogEntry;
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -13,19 +14,17 @@ public class DatabaseManager {
     private static final String URL = "jdbc:sqlite:worklog.db";
     private static final Logger LOGGER = Logger.getLogger(DatabaseManager.class.getName());
 
-    /** Kapcsolódás az adatbázishoz */
     private static Connection connect() throws SQLException {
         try {
-            Class.forName("org.sqlite.JDBC");  // Regisztráljuk az SQLite JDBC drivert
+            Class.forName("org.sqlite.JDBC");
         } catch (ClassNotFoundException e) {
-            throw new SQLException("SQLite JDBC driver nem található!", e);
+            throw new SQLException("SQLite JDBC driver not found!", e);
         }
-        return DriverManager.getConnection("jdbc:sqlite:worklog.db");
+        return DriverManager.getConnection(URL);
     }
 
-    /** Adatbázis inicializálása (ha még nem létezik) */
     public static void initializeDatabase() {
-        String sql = """
+        String createWorkLogTable = """
             CREATE TABLE IF NOT EXISTS work_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT NOT NULL,
@@ -37,46 +36,76 @@ public class DatabaseManager {
             );
         """;
 
-        try (Connection conn = connect();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-            LOGGER.log(Level.INFO, "Adatbázis létrehozva és inicializálva.");
+        String createLocationsTable = """
+            CREATE TABLE IF NOT EXISTS locations (
+                entry_id INTEGER,
+                location TEXT,
+                FOREIGN KEY(entry_id) REFERENCES work_log(id) ON DELETE CASCADE
+            );
+        """;
+
+        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+            stmt.execute(createWorkLogTable);
+            stmt.execute(createLocationsTable);
+            LOGGER.log(Level.INFO, "Database created and initialized.");
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Hiba történt az adatbázis inicializálásakor.", e);
+            LOGGER.log(Level.SEVERE, "Error initializing database", e);
         }
     }
 
-    /** Bejegyzés mentése az adatbázisba */
     public static void saveEntry(WorkLogEntry entry) {
-        String sql = "INSERT INTO work_log (date, start_time, end_time, description, out_of_county, hourly_wage) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertEntry = "INSERT INTO work_log (date, start_time, end_time, description, out_of_county, hourly_wage) VALUES (?, ?, ?, ?, ?, ?)";
+        String insertLocation = "INSERT INTO locations (entry_id, location) VALUES (?, ?)";
 
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, entry.getDate().toString());
-            pstmt.setString(2, entry.getStartTime().toString());
-            pstmt.setString(3, entry.getEndTime().toString());
-            pstmt.setString(4, entry.getDescription());
-            pstmt.setBoolean(5, entry.isOutOfCounty());
-            pstmt.setInt(6, entry.getHourlyWage());
+        try (Connection conn = connect()) {
+            conn.setAutoCommit(false);
 
-            pstmt.executeUpdate();
-            LOGGER.log(Level.INFO, "Bejegyzés sikeresen mentve: " + entry);
+            try (PreparedStatement pstmt = conn.prepareStatement(insertEntry, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, entry.getDate().toString());
+                pstmt.setString(2, entry.getStartTime().toString());
+                pstmt.setString(3, entry.getEndTime().toString());
+                pstmt.setString(4, entry.getDescription());
+                pstmt.setBoolean(5, entry.isOutOfCounty());
+                pstmt.setInt(6, entry.getHourlyWage());
+                pstmt.executeUpdate();
+
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int entryId = generatedKeys.getInt(1);
+                        if (entry.getLocations() != null) {
+                            try (PreparedStatement locStmt = conn.prepareStatement(insertLocation)) {
+                                for (String location : entry.getLocations()) {
+                                    locStmt.setInt(1, entryId);
+                                    locStmt.setString(2, location);
+                                    locStmt.addBatch();
+                                }
+                                locStmt.executeBatch();
+                            }
+                        }
+                    }
+                }
+            }
+
+            conn.commit();
+            LOGGER.log(Level.INFO, "Entry saved successfully: " + entry);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Hiba történt a bejegyzés mentésekor.", e);
+            LOGGER.log(Level.SEVERE, "Error saving entry", e);
         }
     }
 
-    /** Bejegyzések betöltése az adatbázisból */
     public static List<WorkLogEntry> loadEntries() {
-        List<WorkLogEntry> entriesList = new ArrayList<>();
-        String sql = "SELECT * FROM work_log";
+        List<WorkLogEntry> entries = new ArrayList<>();
+        String selectEntries = "SELECT * FROM work_log";
+        String selectLocations = "SELECT location FROM locations WHERE entry_id = ?";
 
         try (Connection conn = connect();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs = stmt.executeQuery(selectEntries)) {
+
             while (rs.next()) {
+                int id = rs.getInt("id");
                 WorkLogEntry entry = new WorkLogEntry(
-                        rs.getInt("id"),
+                        id,
                         LocalDate.parse(rs.getString("date")),
                         LocalTime.parse(rs.getString("start_time")),
                         LocalTime.parse(rs.getString("end_time")),
@@ -84,26 +113,37 @@ public class DatabaseManager {
                         rs.getBoolean("out_of_county"),
                         rs.getInt("hourly_wage")
                 );
-                entriesList.add(entry);
+
+                try (PreparedStatement locStmt = conn.prepareStatement(selectLocations)) {
+                    locStmt.setInt(1, id);
+                    try (ResultSet locRs = locStmt.executeQuery()) {
+                        List<String> locations = new ArrayList<>();
+                        while (locRs.next()) {
+                            locations.add(locRs.getString("location"));
+                        }
+                        entry.setLocations(locations);
+                    }
+                }
+
+                entries.add(entry);
             }
-            LOGGER.log(Level.INFO, "Bejegyzések betöltése sikeres.");
+            LOGGER.log(Level.INFO, "Entries loaded successfully.");
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Hiba történt a bejegyzések betöltésekor.", e);
+            LOGGER.log(Level.SEVERE, "Error loading entries", e);
         }
-        return entriesList;
+        return entries;
     }
 
-    /** Bejegyzés törlése az adatbázisból */
     public static void deleteEntry(int id) {
-        String sql = "DELETE FROM work_log WHERE id=?";
+        String deleteEntry = "DELETE FROM work_log WHERE id = ?";
 
         try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(deleteEntry)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
-            LOGGER.log(Level.INFO, "Bejegyzés törölve, ID: " + id);
+            LOGGER.log(Level.INFO, "Entry deleted, ID: " + id);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Hiba történt a bejegyzés törlésekor.", e);
+            LOGGER.log(Level.SEVERE, "Error deleting entry", e);
         }
     }
 }

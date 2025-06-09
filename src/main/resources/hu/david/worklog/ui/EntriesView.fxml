@@ -1,28 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml"
-            stylesheets="@style.css"
-            fx:controller="hu.david.worklog.ui.EntriesViewController"
-            prefWidth="1300"
-            prefHeight="900">
-
-    <top>
-        <Label text="Mentett bejegyzések" styleClass="label-title" />
-    </top>
-
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="hu.david.worklog.ui.EntriesViewController">
     <center>
-        <ScrollPane fitToWidth="true" fitToHeight="true">
-            <ListView fx:id="entriesList" prefHeight="600" />
-        </ScrollPane>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="10.0" right="10.0" bottom="10.0" left="10.0" />
+            </padding>
+            <Label text="Mentett Bejegyzések" styleClass="label-title" />
+            <TableView fx:id="entriesTable" prefHeight="400.0" prefWidth="800.0">
+                <columns>
+                    <TableColumn fx:id="dateColumn" text="Dátum" prefWidth="100.0" />
+                    <TableColumn fx:id="startTimeColumn" text="Kezdés" prefWidth="75.0" />
+                    <TableColumn fx:id="endTimeColumn" text="Befejezés" prefWidth="75.0" />
+                    <TableColumn fx:id="durationColumn" text="Munkaidő" prefWidth="100.0" />
+                    <TableColumn fx:id="locationColumn" text="Helyszínek" prefWidth="150.0" />
+                    <TableColumn fx:id="descriptionColumn" text="Leírás" prefWidth="200.0" />
+                    <TableColumn fx:id="calculatedWageColumn" text="Napi Bér" prefWidth="100.0" />
+                </columns>
+            </TableView>
+            <HBox spacing="10">
+                <Button text="Frissítés" onAction="#refreshEntries" />
+                <Button text="Törlés" onAction="#deleteSelectedEntries" />
+                <Button text="Vissza" onAction="#goBack" />
+            </HBox>
+        </VBox>
     </center>
-
-    <bottom>
-        <HBox spacing="30" alignment="CENTER" styleClass="hbox-footer">
-            <Button text="Vissza" onAction="#goBack" />
-            <Button text="Bejegyzés törlése" onAction="#deleteSelectedEntries" />
-            <Button text="Frissítés" onAction="#refreshEntries" />
-        </HBox>
-    </bottom>
 </BorderPane>

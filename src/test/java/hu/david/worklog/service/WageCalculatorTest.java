@@ -60,4 +60,11 @@ public class WageCalculatorTest {
         WorkLogEntry entry = createEntry(7.8, 1875, false);
         assertEquals(15000, WageCalculator.calculateWage(entry));
     }
+
+    @Test
+    public void testAdjustedHoursCalculation() {
+        assertEquals(7.5, WageCalculator.calculateAdjustedHours(7.3));
+        assertEquals(8.0, WageCalculator.calculateAdjustedHours(7.8));
+        assertEquals(7.0, WageCalculator.calculateAdjustedHours(7.2));
+    }
 }

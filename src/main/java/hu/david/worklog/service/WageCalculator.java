@@ -28,7 +28,7 @@ public class WageCalculator {
         return (int) Math.round(totalWage);
     }
 
-    private static double roundToNearestHalf(double hours) {
+    public static double roundToNearestHalf(double hours) {
         int fullHours = (int) hours;
         double remainder = hours - fullHours;
 
@@ -44,5 +44,9 @@ public class WageCalculator {
     public static String formatWage(int wage) {
         NumberFormat formatter = NumberFormat.getNumberInstance(new Locale("hu", "HU"));
         return formatter.format(wage) + " Ft";
+    }
+
+    public static double calculateAdjustedHours(double rawHours) {
+        return roundToNearestHalf(rawHours);
     }
 }
