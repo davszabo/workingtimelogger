@@ -40,9 +40,9 @@ public class AddEntryController {
         startHourCombo.getItems().addAll(hours);
         endHourCombo.getItems().addAll(hours);
 
-        // Percek 1-59 között, Integer típussal
+        // Percek 0-59 között, Integer típussal
         List<Integer> minutes = new ArrayList<>();
-        for (int i = 1; i <= 59; i++) {
+        for (int i = 0; i <= 59; i++) {
             minutes.add(i);
         }
         startMinuteCombo.getItems().addAll(minutes);
