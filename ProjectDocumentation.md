@@ -58,15 +58,13 @@ mvn clean javafx:run
 
 ### Magyarul
 
-Az alkalmazás az első futtatáskor automatikusan létrehozza a `worklog.db` SQLite adatbázist.
-Fő tábla: `entries`
+Az alkalmazás az első futtatáskor automatikusan létrehozza a `worklog.db` SQLite adatbázist. Fő tábla: `entries`
 
 * Mezők: `id`, `date`, `start`, `end`, `breakMinutes`, `comment`
 
 ### English
 
-The application creates a `worklog.db` SQLite database on first run.
-Main table: `entries`
+The application creates a `worklog.db` SQLite database on first run. Main table: `entries`
 
 * Fields: `id`, `date`, `start`, `end`, `breakMinutes`, `comment`
 
@@ -83,6 +81,43 @@ Main table: `entries`
 
 ---
 
+## 📘 Osztályleírások / Class Descriptions (HU)
+
+### `JavaFXApp`
+
+A fő belépési pont az alkalmazáshoz. Betölti az FXML-t, inicializálja az adatbázist és megjeleníti a fő ablakot. Használja a `ViewManager` osztályt az ablakok központi kezelésére.
+
+### `DatabaseManager`
+
+Statikus osztály, amely az SQLite adatbázis kapcsolat kezeléséért felelős. Tartalmaz:
+
+* Adatbázis inicializálás (tábla létrehozás, ha nem létezik)
+* Lekérdezések, beszúrások futtatása
+
+### `WorkLogEntry`
+
+Egyszerű Java modell osztály, amely egy munkaidő bejegyzést reprezentál. Tartalmazza a következő mezőket:
+
+* `date`, `startTime`, `endTime`, `breakMinutes`, `comment`
+  Használható JavaFX `ObservableList`-ekben is.
+
+### `WageCalculator`
+
+Számítási segédosztály, amely képes kiszámolni a ledolgozott órák és a megadott órabér alapján a fizetést. Segédfüggvényekkel kiszámítja a szünetek levonását is.
+
+### `ViewManager`
+
+Központi osztály a JavaFX ablakok kezelésére. Beállítja a fő `Stage`-et, és felelős a különböző nézetek közötti váltásért (FXML betöltés).
+
+### `MainViewController`, `AddEntryController`, `EntriesViewController`, stb.
+
+Ezek a vezérlők az egyes FXML fájlokhoz tartoznak, kezelik a felhasználói interakciókat. Például:
+
+* `AddEntryController`: új bejegyzés mentése az adatbázisba
+* `EntriesViewController`: korábbi bejegyzések listázása
+
+---
+
 ## 🔍 Tesztelés / Testing
 
 ```bash
@@ -94,10 +129,11 @@ JUnit 5 tesztek elérhetők a `src/test/java` alatt. / JUnit 5 test cases under 
 
 ## 🙌 Közreműködők / Contributors
 
-* David (fejlesztő / developer)
+* David Kalman Szabo (fejlesztő / developer)
 * Microsoft Copilot
 * ChatGPT Codex
 * ChatGPT Code Copilot
+
 ---
 
 ## ✨ Licenc / License
