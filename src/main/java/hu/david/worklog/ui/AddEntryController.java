@@ -109,6 +109,7 @@ public class AddEntryController {
             LocalTime endTime = LocalTime.of(endHour, endMinute);
 
             WorkLogEntry entry = new WorkLogEntry(date, startTime, endTime, description, outOfCounty, hourlyWage);
+            entry.setLocations(new ArrayList<>(locations));
             DatabaseManager.saveEntry(entry);
             showAlert("Siker", "Bejegyzés mentve!");
             clearForm();
