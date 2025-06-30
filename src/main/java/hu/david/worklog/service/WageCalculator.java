@@ -10,10 +10,13 @@ import java.util.Locale;
 public class WageCalculator {
 
     public static int calculateWage(WorkLogEntry entry) {
-        LocalTime start = entry.getStartTime();
-        LocalTime end = entry.getEndTime();
-        int baseWage = entry.getHourlyWage();
-        boolean outOfCounty = entry.isOutOfCounty();
+        // Minden mező String, parse-olni kell!
+        LocalTime start = parseTime(entry.getStartTime());
+        LocalTime end = parseTime(entry.getEndTime());
+        int baseWage = parseIntSafe(entry.getCalculatedWage()); // vagy entry.getHourlyWage(), ha van ilyen meződ
+        boolean outOfCounty = parseBooleanSafe(entry.getLocation()); // vagy entry.getOutOfCounty(), ha van ilyen meződ
+
+        if (start == null || end == null) return 0;
 
         long totalMinutes = Duration.between(start, end).toMinutes();
         double adjustedHours = roundToNearestHalf(totalMinutes / 60.0);
@@ -26,6 +29,31 @@ public class WageCalculator {
         double totalWage = regularHours * effectiveBaseWage + overtimeHours * effectiveBaseWage * 1.3;
 
         return (int) Math.round(totalWage);
+    }
+
+    // Hasznos segéd: parse string to LocalTime
+    private static LocalTime parseTime(String value) {
+        try {
+            return LocalTime.parse(value);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Hasznos segéd: parse int
+    private static int parseIntSafe(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    // Hasznos segéd: parse boolean (ha pl. "igen"/"nem" vagy "true"/"false")
+    private static boolean parseBooleanSafe(String value) {
+        if (value == null) return false;
+        String lower = value.toLowerCase();
+        return lower.equals("true") || lower.equals("igen") || lower.equals("1");
     }
 
     public static double roundToNearestHalf(double hours) {

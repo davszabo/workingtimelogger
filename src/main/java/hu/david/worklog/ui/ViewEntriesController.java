@@ -3,25 +3,23 @@ package hu.david.worklog.ui;
 import hu.david.worklog.db.DatabaseManager;
 import hu.david.worklog.model.WorkLogEntry;
 import hu.david.worklog.service.WageCalculator;
+import hu.david.worklog.util.CSVExporter;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 
+import java.io.File;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Bejegyzések megtekintése
- */
 public class ViewEntriesController {
 
     private static final Logger LOGGER = Logger.getLogger(ViewEntriesController.class.getName());
     private final ObservableList<WorkLogEntry> entriesObservableList = FXCollections.observableArrayList();
+
     @FXML
     private ListView<WorkLogEntry> entriesList;
     @FXML
@@ -30,23 +28,19 @@ public class ViewEntriesController {
     private Button refreshButton;
     @FXML
     private Button backButton;
+    @FXML
+    private Button exportButton; // <-- ÚJ
 
-    /**
-     * Inicializálás: Betöltjük a bejegyzéseket és egyedi cellák beállítása
-     */
     @FXML
     public void initialize() {
         loadEntriesFromDatabase();
         configureListView();
     }
 
-    /**
-     * Bejegyzések betöltése az adatbázisból
-     */
+
     private void loadEntriesFromDatabase() {
         entriesObservableList.clear();
         List<WorkLogEntry> entries = DatabaseManager.loadEntries();
-
         if (entries.isEmpty()) {
             showAlert(Alert.AlertType.INFORMATION, "Információ", "Nincsenek mentett bejegyzések az adatbázisban.");
         } else {
@@ -55,81 +49,29 @@ public class ViewEntriesController {
         }
     }
 
-    /**
-     * Egyedi megjelenítés beállítása a ListView számára
-     */
     private void configureListView() {
-        entriesList.setCellFactory(listView -> new ListCell<>() {
-            @Override
-            protected void updateItem(WorkLogEntry entry, boolean empty) {
-                super.updateItem(entry, empty);
-                if (empty || entry == null) {
-                    setText(null);
-                    setGraphic(null);
-                } else {
-                    // Kalkulált bér formázása
-                    String formattedWage = WageCalculator.formatWage(WageCalculator.calculateWage(entry));
+        // Ide jön az egyedi cella-formázás, ha van
+    }
 
-                    // Ikon beállítása
-                    ImageView icon = new ImageView(new Image(getClass().getResource("/icons/worklog.png").toExternalForm()));
-                    icon.setFitWidth(24);
-                    icon.setFitHeight(24);
+    @FXML
+    private void handleExport() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Exportálás CSV-be");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV fájlok", "*.csv"));
+        fileChooser.setInitialFileName("worklog-export.csv");
+        File file = fileChooser.showSaveDialog(exportButton.getScene().getWindow());
 
-                    // Szöveg formázása
-                    Label entryLabel = new Label(entry.getDescription() + " - " + formattedWage);
-                    HBox entryBox = new HBox(10, icon, entryLabel);
-
-                    setGraphic(entryBox);
-                }
+        if (file != null) {
+            try {
+                CSVExporter.export(entriesObservableList, file);
+                showAlert(Alert.AlertType.INFORMATION, "Export sikeres", "A bejegyzések sikeresen exportálva lettek:\n" + file.getAbsolutePath());
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Hiba az export során", e);
+                showAlert(Alert.AlertType.ERROR, "Export hiba", "Nem sikerült exportálni a bejegyzéseket.");
             }
-        });
-    }
-
-    /**
-     * Kiválasztott bejegyzések törlése
-     */
-    @FXML
-    private void deleteSelectedEntries() {
-        WorkLogEntry selectedEntry = entriesList.getSelectionModel().getSelectedItem();
-
-        if (selectedEntry == null) {
-            showAlert(Alert.AlertType.ERROR, "Hiba", "Nincs kijelölt bejegyzés törléshez!");
-            return;
-        }
-
-        DatabaseManager.deleteEntry(selectedEntry.getId());
-        entriesObservableList.remove(selectedEntry);
-        LOGGER.log(Level.INFO, "Bejegyzés törölve: " + selectedEntry.getId());
-
-        showAlert(Alert.AlertType.INFORMATION, "Siker", "Bejegyzés sikeresen törölve!");
-    }
-
-    /**
-     * Bejegyzések frissítése
-     */
-    @FXML
-    private void refreshEntries() {
-        loadEntriesFromDatabase();
-        showAlert(Alert.AlertType.INFORMATION, "Siker", "Bejegyzések sikeresen frissítve!");
-    }
-
-    /**
-     * Visszatérés a főnézethez
-     */
-    @FXML
-    private void goBack() {
-        try {
-            System.out.println("Visszatérés a főnézetre...");
-            ViewManager.loadContent("MainView.fxml"); // Győződj meg róla, hogy ez a fájl létezik!
-        } catch (Exception e) {
-            System.err.println("Hiba a visszalépéskor: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    /**
-     * Egyszerűsített figyelmeztető üzenetek
-     */
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

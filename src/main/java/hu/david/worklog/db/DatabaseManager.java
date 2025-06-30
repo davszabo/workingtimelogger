@@ -3,8 +3,6 @@ package hu.david.worklog.db;
 import hu.david.worklog.model.WorkLogEntry;
 
 import java.sql.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -21,8 +19,6 @@ public class DatabaseManager {
             throw new SQLException("SQLite JDBC driver not found!", e);
         }
         Connection conn = DriverManager.getConnection(URL);
-        // Enable foreign key enforcement so cascading deletes remove related
-        // locations when a work_log row is deleted.
         try (Statement s = conn.createStatement()) {
             s.execute("PRAGMA foreign_keys = ON");
         }
@@ -36,23 +32,15 @@ public class DatabaseManager {
                 date TEXT NOT NULL,
                 start_time TEXT NOT NULL,
                 end_time TEXT NOT NULL,
+                duration TEXT,
+                location TEXT,
                 description TEXT NOT NULL,
-                out_of_county BOOLEAN NOT NULL,
-                hourly_wage INTEGER NOT NULL
+                calculated_wage TEXT
             );
         """;
 
-        String createLocationsTable = """
-            CREATE TABLE IF NOT EXISTS locations (
-                entry_id INTEGER,
-                location TEXT,
-                FOREIGN KEY(entry_id) REFERENCES work_log(id) ON DELETE CASCADE
-            );
-        """; // related rows are removed automatically when the parent entry is deleted
-
         try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
             stmt.execute(createWorkLogTable);
-            stmt.execute(createLocationsTable);
             LOGGER.log(Level.INFO, "Database created and initialized.");
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error initializing database", e);
@@ -60,39 +48,19 @@ public class DatabaseManager {
     }
 
     public static void saveEntry(WorkLogEntry entry) {
-        String insertEntry = "INSERT INTO work_log (date, start_time, end_time, description, out_of_county, hourly_wage) VALUES (?, ?, ?, ?, ?, ?)";
-        String insertLocation = "INSERT INTO locations (entry_id, location) VALUES (?, ?)";
+        String insertEntry = "INSERT INTO work_log (date, start_time, end_time, duration, location, description, calculated_wage) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = connect()) {
-            conn.setAutoCommit(false);
-
-            try (PreparedStatement pstmt = conn.prepareStatement(insertEntry, Statement.RETURN_GENERATED_KEYS)) {
-                pstmt.setString(1, entry.getDate().toString());
-                pstmt.setString(2, entry.getStartTime().toString());
-                pstmt.setString(3, entry.getEndTime().toString());
-                pstmt.setString(4, entry.getDescription());
-                pstmt.setBoolean(5, entry.isOutOfCounty());
-                pstmt.setInt(6, entry.getHourlyWage());
+            try (PreparedStatement pstmt = conn.prepareStatement(insertEntry)) {
+                pstmt.setString(1, entry.getDate());
+                pstmt.setString(2, entry.getStartTime());
+                pstmt.setString(3, entry.getEndTime());
+                pstmt.setString(4, entry.getDuration());
+                pstmt.setString(5, entry.getLocation()); // most már String!
+                pstmt.setString(6, entry.getDescription());
+                pstmt.setString(7, entry.getCalculatedWage());
                 pstmt.executeUpdate();
-
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        int entryId = generatedKeys.getInt(1);
-                        if (entry.getLocations() != null) {
-                            try (PreparedStatement locStmt = conn.prepareStatement(insertLocation)) {
-                                for (String location : entry.getLocations()) {
-                                    locStmt.setInt(1, entryId);
-                                    locStmt.setString(2, location);
-                                    locStmt.addBatch();
-                                }
-                                locStmt.executeBatch();
-                            }
-                        }
-                    }
-                }
             }
-
-            conn.commit();
             LOGGER.log(Level.INFO, "Entry saved successfully: " + entry);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Error saving entry", e);
@@ -102,7 +70,6 @@ public class DatabaseManager {
     public static List<WorkLogEntry> loadEntries() {
         List<WorkLogEntry> entries = new ArrayList<>();
         String selectEntries = "SELECT * FROM work_log";
-        String selectLocations = "SELECT location FROM locations WHERE entry_id = ?";
 
         try (Connection conn = connect();
              Statement stmt = conn.createStatement();
@@ -110,27 +77,15 @@ public class DatabaseManager {
 
             while (rs.next()) {
                 int id = rs.getInt("id");
-                WorkLogEntry entry = new WorkLogEntry(
-                        id,
-                        LocalDate.parse(rs.getString("date")),
-                        LocalTime.parse(rs.getString("start_time")),
-                        LocalTime.parse(rs.getString("end_time")),
-                        rs.getString("description"),
-                        rs.getBoolean("out_of_county"),
-                        rs.getInt("hourly_wage")
-                );
+                String date = rs.getString("date");
+                String startTime = rs.getString("start_time");
+                String endTime = rs.getString("end_time");
+                String duration = rs.getString("duration");
+                String location = rs.getString("location");
+                String description = rs.getString("description");
+                String calculatedWage = rs.getString("calculated_wage");
 
-                try (PreparedStatement locStmt = conn.prepareStatement(selectLocations)) {
-                    locStmt.setInt(1, id);
-                    try (ResultSet locRs = locStmt.executeQuery()) {
-                        List<String> locations = new ArrayList<>();
-                        while (locRs.next()) {
-                            locations.add(locRs.getString("location"));
-                        }
-                        entry.setLocations(locations);
-                    }
-                }
-
+                WorkLogEntry entry = new WorkLogEntry(id, date, startTime, endTime, duration, location, description, calculatedWage);
                 entries.add(entry);
             }
             LOGGER.log(Level.INFO, "Entries loaded successfully.");

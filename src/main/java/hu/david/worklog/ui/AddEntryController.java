@@ -108,8 +108,30 @@ public class AddEntryController {
             LocalTime startTime = LocalTime.of(startHour, startMinute);
             LocalTime endTime = LocalTime.of(endHour, endMinute);
 
-            WorkLogEntry entry = new WorkLogEntry(date, startTime, endTime, description, outOfCounty, hourlyWage);
-            entry.setLocations(new ArrayList<>(locations));
+            // --- ÚJ: duration kiszámítása ---
+            long durationMinutes = java.time.Duration.between(startTime, endTime).toMinutes();
+            String duration = (durationMinutes / 60) + ":" + String.format("%02d", (durationMinutes % 60));
+
+            // --- ÚJ: locationok összevonása ---
+            String locationsString = String.join(";", locations);
+
+            // --- ÚJ: napi bér kiszámítása ---
+            double hoursDecimal = durationMinutes / 60.0;
+            double wageValue = hoursDecimal * hourlyWage * (outOfCounty ? 1.4 : 1.0);
+            String calculatedWage = String.valueOf((int)Math.round(wageValue));
+
+            // --- Az új WorkLogEntry példányosítás ---
+            WorkLogEntry entry = new WorkLogEntry(
+                    0,                      // új bejegyzésnél ID: 0
+                    date.toString(),        // dátum szövegként
+                    startTime.toString(),   // kezdés szövegként
+                    endTime.toString(),     // befejezés szövegként
+                    duration,               // időtartam "óó:pp" formában
+                    locationsString,        // helyszínek
+                    description,            // leírás
+                    calculatedWage          // napi bér szövegként
+            );
+
             DatabaseManager.saveEntry(entry);
             showAlert("Siker", "Bejegyzés mentve!");
             clearForm();

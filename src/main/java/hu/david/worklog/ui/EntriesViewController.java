@@ -2,16 +2,15 @@ package hu.david.worklog.ui;
 
 import hu.david.worklog.db.DatabaseManager;
 import hu.david.worklog.model.WorkLogEntry;
-import hu.david.worklog.service.WageCalculator;
-import javafx.beans.property.ReadOnlyStringWrapper;
+import hu.david.worklog.util.CSVExporter;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.paint.Color;
-import javafx.util.Callback;
+import javafx.stage.FileChooser;
 
-import java.time.Duration;
-import java.time.format.DateTimeFormatter;
+import java.io.File;
 import java.util.List;
 
 public class EntriesViewController {
@@ -33,81 +32,81 @@ public class EntriesViewController {
     @FXML
     private TableColumn<WorkLogEntry, String> calculatedWageColumn;
 
+    private ObservableList<WorkLogEntry> entries = FXCollections.observableArrayList();
+
     @FXML
     public void initialize() {
-        dateColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
-                cell.getValue().getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+        setupColumns();
+        loadEntries();
+    }
 
-        startTimeColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
-                cell.getValue().getStartTime().toString()));
+    private void setupColumns() {
+        dateColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDate()));
+        startTimeColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getStartTime()));
+        endTimeColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getEndTime()));
+        durationColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDuration()));
+        locationColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getLocation()));
+        descriptionColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getDescription()));
+        calculatedWageColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getCalculatedWage()));
+    }
 
-        endTimeColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
-                cell.getValue().getEndTime().toString()));
-
-        durationColumn.setCellValueFactory(cell -> {
-            long minutes = Duration.between(
-                    cell.getValue().getStartTime(), cell.getValue().getEndTime()).toMinutes();
-            long hours = minutes / 60;
-            long remMin = minutes % 60;
-            return new ReadOnlyStringWrapper(String.format("%02d:%02d", hours, remMin));
-        });
-
-        locationColumn.setCellValueFactory(cell -> new ReadOnlyStringWrapper(
-                cell.getValue().getLocation()));
-
-        descriptionColumn.setCellValueFactory(new PropertyValueFactory<>("description"));
-
-        calculatedWageColumn.setCellValueFactory(cell -> {
-            WorkLogEntry entry = cell.getValue();
-            int wage = WageCalculator.calculateWage(entry);
-            return new ReadOnlyStringWrapper(WageCalculator.formatWage(wage));
-        });
-
-        calculatedWageColumn.setCellFactory(new Callback<>() {
-            @Override
-            public TableCell<WorkLogEntry, String> call(TableColumn<WorkLogEntry, String> param) {
-                return new TableCell<>() {
-                    @Override
-                    protected void updateItem(String item, boolean empty) {
-                        super.updateItem(item, empty);
-                        if (empty || item == null) {
-                            setText(null);
-                            setStyle("");
-                        } else {
-                            setText(item);
-                            WorkLogEntry entry = getTableView().getItems().get(getIndex());
-                            double duration = WageCalculator.roundToNearestHalf(entry.getDurationHours());
-                            if (duration > 8.0) {
-                                setTextFill(Color.RED);
-                            } else {
-                                setTextFill(Color.BLACK);
-                            }
-                        }
-                    }
-                };
-            }
-        });
-
-        refreshEntries();
+    private void loadEntries() {
+        entries.clear();
+        List<WorkLogEntry> loaded = DatabaseManager.loadEntries();
+        entries.addAll(loaded);
+        entriesTable.setItems(entries);
     }
 
     @FXML
-    public void refreshEntries() {
-        List<WorkLogEntry> entries = DatabaseManager.loadEntries();
-        entriesTable.getItems().setAll(entries);
+    private void refreshEntries() {
+        loadEntries();
+        showAlert(Alert.AlertType.INFORMATION, "Frissítés", "A bejegyzések frissítve.");
     }
 
     @FXML
-    public void deleteSelectedEntries() {
+    private void deleteSelectedEntries() {
         WorkLogEntry selected = entriesTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            DatabaseManager.deleteEntry(selected.getId());
-            refreshEntries();
+        if (selected == null) {
+            showAlert(Alert.AlertType.WARNING, "Nincs kiválasztva", "Válassz ki egy bejegyzést a törléshez!");
+            return;
+        }
+        DatabaseManager.deleteEntry(selected.getId()); // vagy getDate(), ha id nincs!
+        loadEntries();
+        showAlert(Alert.AlertType.INFORMATION, "Törlés", "A kiválasztott bejegyzés törölve.");
+    }
+
+    @FXML
+    private void goBack() {
+        // Implementáld itt a visszalépést (scene switch, stb.)
+    }
+
+    @FXML
+    private void handleExport() {
+        if (entries.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Nincs exportálható adat", "Nincsenek bejegyzések az exportáláshoz!");
+            return;
+        }
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Exportálás CSV-be");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV fájlok", "*.csv"));
+        fileChooser.setInitialFileName("worklog-export.csv");
+        File file = fileChooser.showSaveDialog(entriesTable.getScene().getWindow());
+
+        if (file != null) {
+            try {
+                CSVExporter.export(entries, file);
+                showAlert(Alert.AlertType.INFORMATION, "Export sikeres", "A bejegyzések sikeresen exportálva:\n" + file.getAbsolutePath());
+            } catch (Exception e) {
+                showAlert(Alert.AlertType.ERROR, "Export hiba", "Nem sikerült exportálni a bejegyzéseket.\n" + e.getMessage());
+            }
         }
     }
 
-    @FXML
-    public void goBack() {
-        ViewManager.loadContent("HomeView.fxml");
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

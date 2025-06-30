@@ -1,86 +1,63 @@
 package hu.david.worklog.model;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-
 public class WorkLogEntry {
-    private int id;
-    private LocalDate date;
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private int id; // Egyedi azonosító, az adatbázisban is szerepel
+    private String date;
+    private String startTime;
+    private String endTime;
+    private String duration;
+    private String location;
     private String description;
-    private boolean outOfCounty;
-    private int hourlyWage;
-    private List<String> locations = new ArrayList<>();
+    private String calculatedWage;
 
-    public WorkLogEntry(int id, LocalDate date, LocalTime startTime, LocalTime endTime, String description, boolean outOfCounty, int hourlyWage) {
+    // Konstruktor minden mezővel
+    public WorkLogEntry(int id, String date, String startTime, String endTime, String duration,
+                        String location, String description, String calculatedWage) {
         this.id = id;
         this.date = date;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.duration = duration;
+        this.location = location;
         this.description = description;
-        this.outOfCounty = outOfCounty;
-        this.hourlyWage = hourlyWage;
+        this.calculatedWage = calculatedWage;
     }
 
-    public WorkLogEntry(LocalDate date, LocalTime startTime, LocalTime endTime, String description, boolean outOfCounty, int hourlyWage) {
-        this(-1, date, startTime, endTime, description, outOfCounty, hourlyWage);
-    }
-
+    // Getterek
     public int getId() {
         return id;
     }
 
-    public LocalDate getDate() {
+    public String getDate() {
         return date;
     }
 
-    public LocalTime getStartTime() {
+    public String getStartTime() {
         return startTime;
     }
 
-    public LocalTime getEndTime() {
+    public String getEndTime() {
         return endTime;
+    }
+
+    public String getDuration() {
+        return duration;
+    }
+
+    public String getLocation() {
+        return location;
     }
 
     public String getDescription() {
         return description;
     }
 
-    public boolean isOutOfCounty() {
-        return outOfCounty;
+    public String getCalculatedWage() {
+        return calculatedWage;
     }
 
-    public int getWage() {
-        return hourlyWage;
-    }
-
-    public int getHourlyWage() {
-        return hourlyWage;
-    }
-
-    public List<String> getLocations() {
-        return locations == null || locations.isEmpty() ? null : locations;
-    }
-
-    public void setLocations(List<String> locations) {
-        this.locations = locations;
-    }
-
-    public double getDurationHours() {
-        Duration duration = Duration.between(startTime, endTime);
-        return duration.toMinutes() / 60.0;
-    }
-
-    public String getLocation() {
-        return locations == null || locations.isEmpty() ? "" : String.join(", ", locations);
-    }
-
-    @Override
-    public String toString() {
-        return date + ": " + description;
+    // Opcionális setter, ha később akarod beállítani az ID-t
+    public void setId(int id) {
+        this.id = id;
     }
 }

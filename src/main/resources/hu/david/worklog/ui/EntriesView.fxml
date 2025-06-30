@@ -25,6 +25,8 @@
                 <Button text="Frissítés" onAction="#refreshEntries" />
                 <Button text="Törlés" onAction="#deleteSelectedEntries" />
                 <Button text="Vissza" onAction="#goBack" />
+                <Button text="Exportálás CSV-be" onAction="#handleExport" />
+
             </HBox>
         </VBox>
     </center>
